@@ -44,58 +44,12 @@ INSERT INTO Status (Description) VALUES ('Принято к отправлени
 ('В сортировочном центре'),
 ('На таможне');
 
-DELIMITER $$
-
-create procedure addMail(send_name varchar(200) , send_index int, send_address_id int,
-                         reciever_name varchar(200), reciever_index int, reciever_address_id int,
-                         weight decimal(6, 3), tariff int, courier_service int)
-  BEGIN
-    declare s_id, r_id, mail_id int;
-    declare cost, weigth_cost, const_cost decimal(8, 3);
-    INSERT IGNORE INTO FullAddress (PostIndex, AddressId, PersonName) VALUES (send_index, send_address_id, send_name);
-    set s_id = (Select Id from FullAddress Where (PostIndex, AddressId, PersonName) = (send_index, send_address_id, send_name));
-
-    INSERT IGNORE INTO FullAddress (PostIndex, AddressId, PersonName) VALUES (reciever_index, reciever_address_id, reciever_name);
-    set r_id = (Select Id from FullAddress Where (PostIndex, AddressId, PersonName) = (reciever_index, reciever_address_id, reciever_name));
-
-    if courier_service is not NULL then
-      set cost = (select Price from courierservice where id = courier_service);
-    else
-      set cost = 0;
-    end if;
-
-    select ConstPrice, WeightPrice into const_cost, weigth_cost from tarification where id = tariff;
-
-    set cost = cost + const_cost + weigth_cost * weight;
-
-    INSERT INTO Mail (FromFullAddress,
-                      ToFullAddress,
-                      Weight,
-                      Tariff,
-                      Price,
-                      CourierService)
-      VALUES (s_id, r_id, weight, tariff, cost, courier_service);
-
-    set mail_id = (SELECT LAST_INSERT_ID());
-
-    INSERT INTO Tracking (MailId, AddressId, StatusId) VALUES (mail_id, reciever_address_id, 1);
-
-  END $$
-
-
-DELIMITER ;
 
 CALL addMail('Попов Артем Леонидович', 139301, 26, 'Кожевников Иван Андреевич', 831390, 28, 0.02, 3, 1);
 
 
-
 SELECT * from MAIl where DATE_SUB(CURTIME(),INTERVAL 1 HOUR ) <= time;
+
 SELECT * from tracking where DATE_SUB(CURTIME(),INTERVAL 1 HOUR ) <= time;
 
 
-# Загрузить транспорт
-START TRANSACTION;
-UPDATE mail SET TransportId = 1 where id in (1, 2, 3);
-INSERT INTO Tracking (MailId, AddressId, TransportId, StatusId)
-  SELECT Id, 2512, TransportId, 3 from Mail where TransportId = 1;
-COMMIT;
