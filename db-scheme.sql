@@ -64,6 +64,9 @@ CREATE TABLE FullAddress (
   FOREIGN KEY (PostIndex) REFERENCES PostOffices (PostIndex)
 ) ENGINE InnoDB;
 
+
+
+
 CREATE TABLE Transports (
   Id INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
   Type ENUM ('COURIER', 'SHIP', 'TRAIN', 'AIRPLANE', 'CAR') NOT NULL,
@@ -94,7 +97,7 @@ CREATE TABLE CourierService (
 
 
 CREATE TABLE Mail(
-  ID INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
+  Id INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
   FromFullAddress INT NOT NULL,
   ToFullAddress INT NOT NULL,
   Weight DECIMAL(6, 3) NOT NULL,
@@ -109,6 +112,9 @@ CREATE TABLE Mail(
   FOREIGN KEY (CourierService) REFERENCES CourierService (Id)
 ) ENGINE InnoDB;
 
+# Для быстрых выборок по транспорту
+ALTER TABLE Mail ADD INDEX (TransportId);
+
 CREATE TABLE Tracking (
   MailId INT NOT NULL,
   AddressId INT NOT NULL,
@@ -120,6 +126,7 @@ CREATE TABLE Tracking (
   FOREIGN KEY (TransportId) REFERENCES Transports (Id),
   FOREIGN KEY (StatusId) REFERENCES Status (Id)
 ) ENGINE InnoDB;
+
 
 
 
